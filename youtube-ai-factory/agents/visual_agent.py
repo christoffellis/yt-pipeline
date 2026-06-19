@@ -2,11 +2,13 @@ from pathlib import Path
 
 from utils.common import write_json, write_placeholder_png
 
+MAX_STORY_SCENES = 8
+
 
 class VisualAgent:
     def generate(self, script: str, visual_plan_path: Path, visuals_dir: Path) -> list[dict]:
         lines = [line.strip() for line in script.splitlines() if line.strip()]
-        story_lines = [line for line in lines if not line.startswith("#")][:8]
+        story_lines = [line for line in lines if not line.startswith("#")][:MAX_STORY_SCENES]
         if not story_lines:
             story_lines = ["Opening context", "Core concept", "Final takeaway"]
 

@@ -7,7 +7,7 @@ ROOT_DIR = Path(__file__).resolve().parents[1]
 if str(ROOT_DIR) not in sys.path:
     sys.path.insert(0, str(ROOT_DIR))
 
-from utils.common import ensure_dir  # noqa: E402
+from utils.common import IDEA_CSV_FIELDS, ensure_dir  # noqa: E402
 from utils.llm import get_default_provider  # noqa: E402
 
 
@@ -30,9 +30,7 @@ def generate_ideas(niche: str, count: int) -> list[dict]:
     lines = [line.strip("-• ") for line in response.splitlines() if line.strip()]
     bad_prefixes = ("hook:", "body:", "outro:", "#", "##")
     clean_lines = [line for line in lines if not line.lower().startswith(bad_prefixes)]
-    titles = (clean_lines or DEFAULT_IDEAS)[:count]
-    while len(titles) < count:
-        titles.append(DEFAULT_IDEAS[len(titles) % len(DEFAULT_IDEAS)])
+    titles = _fill_titles(clean_lines or DEFAULT_IDEAS, count)
 
     ideas = []
     for i, title in enumerate(titles, start=1):
@@ -49,10 +47,17 @@ def generate_ideas(niche: str, count: int) -> list[dict]:
     return ideas
 
 
+def _fill_titles(seed_titles: list[str], count: int) -> list[str]:
+    titles = seed_titles[:count]
+    while len(titles) < count:
+        titles.append(DEFAULT_IDEAS[len(titles) % len(DEFAULT_IDEAS)])
+    return titles
+
+
 def write_ideas_csv(rows: list[dict], output_path: Path) -> None:
     ensure_dir(output_path.parent)
     with output_path.open("w", newline="", encoding="utf-8") as f:
-        writer = csv.DictWriter(f, fieldnames=["id", "title", "description", "hook", "score", "status"])
+        writer = csv.DictWriter(f, fieldnames=IDEA_CSV_FIELDS)
         writer.writeheader()
         writer.writerows(rows)
 

@@ -52,18 +52,72 @@ class GoogleSheetsTracker:
         service = build("sheets", "v4", credentials=credentials)
 
         values = [row.get(column, "") for column in COLUMNS]
-        service.spreadsheets().values().append(
+        end_column = self._column_letter(len(COLUMNS))
+        range_name = f"{self.sheet_name}!A:{end_column}"
+        existing = (
+            service.spreadsheets()
+            .values()
+            .get(spreadsheetId=self.sheet_id, range=range_name)
+            .execute()
+            .get("values", [])
+        )
+        row_id = str(row.get("ID", ""))
+
+        has_header = bool(existing and existing[0] and existing[0][0] == "ID")
+        data_rows = existing[1:] if has_header else existing
+        start_index = 2 if has_header else 1
+        target_row_index = None
+        for index, existing_row in enumerate(data_rows, start=start_index):
+            if existing_row and str(existing_row[0]) == row_id:
+                target_row_index = index
+                break
+
+        if target_row_index is None:
+            service.spreadsheets().values().append(
+                spreadsheetId=self.sheet_id,
+                range=range_name,
+                valueInputOption="USER_ENTERED",
+                body={"values": [values]},
+            ).execute()
+            return
+
+        service.spreadsheets().values().update(
             spreadsheetId=self.sheet_id,
-            range=f"{self.sheet_name}!A:N",
+            range=f"{self.sheet_name}!A{target_row_index}:{end_column}{target_row_index}",
             valueInputOption="USER_ENTERED",
             body={"values": [values]},
         ).execute()
 
     def _upsert_local_csv(self, row: dict) -> None:
         self.local_fallback.parent.mkdir(parents=True, exist_ok=True)
-        file_exists = self.local_fallback.exists()
-        with self.local_fallback.open("a", newline="", encoding="utf-8") as f:
+        normalized_row = {column: row.get(column, "") for column in COLUMNS}
+        existing_rows = []
+        if self.local_fallback.exists():
+            with self.local_fallback.open("r", newline="", encoding="utf-8") as f:
+                existing_rows = list(csv.DictReader(f))
+
+        replaced = False
+        row_id = str(normalized_row.get("ID", ""))
+        for index, existing_row in enumerate(existing_rows):
+            if str(existing_row.get("ID", "")) == row_id:
+                existing_rows[index] = normalized_row
+                replaced = True
+                break
+
+        if not replaced:
+            existing_rows.append(normalized_row)
+
+        with self.local_fallback.open("w", newline="", encoding="utf-8") as f:
             writer = csv.DictWriter(f, fieldnames=COLUMNS)
-            if not file_exists:
-                writer.writeheader()
-            writer.writerow({column: row.get(column, "") for column in COLUMNS})
+            writer.writeheader()
+            writer.writerows(existing_rows)
+
+    @staticmethod
+    def _column_letter(index: int) -> str:
+        if index < 1:
+            raise ValueError("index must be >= 1")
+        value = ""
+        while index > 0:
+            index, remainder = divmod(index - 1, 26)
+            value = chr(65 + remainder) + value
+        return value

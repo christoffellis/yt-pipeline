@@ -1,4 +1,5 @@
 import argparse
+import os
 from pathlib import Path
 
 from agents.research_agent import ResearchAgent
@@ -97,7 +98,10 @@ def run_pipeline(idea: str, base_dir: Path, project_root: str = "projects") -> P
     if not state["steps"]["voice"]:
         log("Generating voice...")
         script = read_text(script_file)
-        provider = get_voice_provider(name="xtts")
+        provider = get_voice_provider(
+            name=os.getenv("VOICE_PROVIDER", "xtts"),
+            model_path=os.getenv("VOICE_MODEL_PATH"),
+        )
         provider.generate_audio(script, audio_file)
         state["steps"]["voice"] = True
         state["status"] = STATUS["voice"]
@@ -170,7 +174,7 @@ def main() -> None:
         return
 
     if not args.idea:
-        parser.error("Provide --idea or --upload")
+        parser.error("Either --idea or --upload must be provided")
 
     run_pipeline(args.idea, base_dir, project_root=args.project_root)
 

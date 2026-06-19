@@ -20,7 +20,7 @@ class PipelineCLITests(unittest.TestCase):
                 "--base-dir",
                 temp_dir,
             ]
-            run = subprocess.run(cmd, check=True, capture_output=True, text=True)
+            run = subprocess.run(cmd, check=True, capture_output=True, text=True, timeout=120)
             self.assertIn("Complete YouTube video package ready for scheduling.", run.stdout)
 
             project_dir = Path(temp_dir) / "projects" / "why_data_centers_print_money"
@@ -32,6 +32,15 @@ class PipelineCLITests(unittest.TestCase):
             self.assertTrue((project_dir / "thumbnail.png").exists())
             self.assertTrue((project_dir / "metadata.json").exists())
             self.assertTrue((project_dir / "state.json").exists())
+            self.assertGreater((project_dir / "audio.wav").stat().st_size, 0)
+
+            metadata = json.loads((project_dir / "metadata.json").read_text(encoding="utf-8"))
+            self.assertIn("title_options", metadata)
+            self.assertIn("description", metadata)
+
+            state = json.loads((project_dir / "state.json").read_text(encoding="utf-8"))
+            for step in ("research", "script", "voice", "visuals", "render", "thumbnail"):
+                self.assertTrue(state["steps"][step])
 
     def test_pipeline_resume_skips_completed_steps(self):
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -43,7 +52,7 @@ class PipelineCLITests(unittest.TestCase):
                 "--base-dir",
                 temp_dir,
             ]
-            subprocess.run(base_cmd, check=True, capture_output=True, text=True)
+            subprocess.run(base_cmd, check=True, capture_output=True, text=True, timeout=120)
 
             project_dir = Path(temp_dir) / "projects" / "how_airports_make_billions"
             state_path = project_dir / "state.json"
@@ -51,7 +60,7 @@ class PipelineCLITests(unittest.TestCase):
             state["steps"]["render"] = False
             state_path.write_text(json.dumps(state), encoding="utf-8")
 
-            second = subprocess.run(base_cmd, check=True, capture_output=True, text=True)
+            second = subprocess.run(base_cmd, check=True, capture_output=True, text=True, timeout=120)
             self.assertIn("Rendering video...", second.stdout)
             self.assertNotIn("Running research agent...", second.stdout)
 

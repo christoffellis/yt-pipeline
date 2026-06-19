@@ -5,6 +5,13 @@ from pathlib import Path
 
 from utils.common import ensure_dir
 
+MIN_DURATION_SECONDS = 10
+MAX_DURATION_SECONDS = 720
+WORDS_PER_SECOND = 2
+DEFAULT_SAMPLE_RATE = 16000
+DEFAULT_AMPLITUDE = 4000
+DEFAULT_FREQUENCY = 220.0
+
 
 class VoiceProvider(ABC):
     @abstractmethod
@@ -18,10 +25,13 @@ class _BaseWaveProvider(VoiceProvider):
 
     def generate_audio(self, script: str, output_path: Path) -> None:
         ensure_dir(output_path.parent)
-        duration_seconds = max(10, min(720, len(script.split()) // 2))
-        sample_rate = 16000
-        amplitude = 4000
-        frequency = 220.0
+        duration_seconds = max(
+            MIN_DURATION_SECONDS,
+            min(MAX_DURATION_SECONDS, round(len(script.split()) / WORDS_PER_SECOND)),
+        )
+        sample_rate = DEFAULT_SAMPLE_RATE
+        amplitude = DEFAULT_AMPLITUDE
+        frequency = DEFAULT_FREQUENCY
         n_frames = duration_seconds * sample_rate
 
         with wave.open(str(output_path), "wb") as wav:

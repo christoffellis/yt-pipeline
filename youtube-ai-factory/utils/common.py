@@ -7,6 +7,7 @@ from pathlib import Path
 MINIMAL_PNG_BASE64 = (
     "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO7d6v8AAAAASUVORK5CYII="
 )
+IDEA_CSV_FIELDS = ["id", "title", "description", "hook", "score", "status"]
 
 
 def slugify(value: str) -> str:
@@ -35,7 +36,7 @@ def write_json(path: Path, payload: dict | list) -> None:
     path.write_text(json.dumps(payload, indent=2, ensure_ascii=False), encoding="utf-8")
 
 
-def read_json(path: Path, default):
+def read_json(path: Path, default: dict | list | None) -> dict | list | None:
     if not path.exists():
         return default
     return json.loads(path.read_text(encoding="utf-8"))

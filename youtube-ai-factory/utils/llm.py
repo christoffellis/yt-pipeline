@@ -3,6 +3,10 @@ import os
 import urllib.error
 import urllib.request
 
+OLLAMA_TIMEOUT_SECONDS = 120
+HEALTHCHECK_TIMEOUT_SECONDS = 2
+_DEFAULT_PROVIDER = None
+
 
 class LLMProvider:
     def generate(self, prompt: str) -> str:
@@ -22,9 +26,17 @@ class OllamaProvider(LLMProvider):
             headers={"Content-Type": "application/json"},
             method="POST",
         )
-        with urllib.request.urlopen(request, timeout=120) as response:
+        with urllib.request.urlopen(request, timeout=OLLAMA_TIMEOUT_SECONDS) as response:
             body = json.loads(response.read().decode("utf-8"))
         return body.get("response", "").strip()
+
+    def is_available(self) -> bool:
+        request = urllib.request.Request(f"{self.host.rstrip('/')}/api/tags", method="GET")
+        try:
+            with urllib.request.urlopen(request, timeout=HEALTHCHECK_TIMEOUT_SECONDS):
+                return True
+        except (urllib.error.URLError, urllib.error.HTTPError, TimeoutError, OSError):
+            return False
 
 
 class FallbackProvider(LLMProvider):
@@ -39,9 +51,17 @@ class FallbackProvider(LLMProvider):
 
 
 def get_default_provider() -> LLMProvider:
+    global _DEFAULT_PROVIDER
+    if _DEFAULT_PROVIDER is not None:
+        return _DEFAULT_PROVIDER
+
     try:
         provider = OllamaProvider()
-        provider.generate("Respond with one word: ready")
-        return provider
+        if provider.is_available():
+            _DEFAULT_PROVIDER = provider
+            return _DEFAULT_PROVIDER
     except (urllib.error.URLError, urllib.error.HTTPError, TimeoutError, OSError):
-        return FallbackProvider()
+        pass
+
+    _DEFAULT_PROVIDER = FallbackProvider()
+    return _DEFAULT_PROVIDER

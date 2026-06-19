@@ -15,10 +15,11 @@ class ScriptAgent:
             f"Topic: {idea}\nResearch:\n{research}"
         )
         draft = self.provider.generate(prompt)
+        draft_lines = [line for line in draft.splitlines() if line.strip()]
         script = (
             "# Script\n\n"
             "## Hook (0:00-0:15)\n"
-            f"{draft.splitlines()[0] if draft else 'What if this business model runs right under your nose?'}\n\n"
+            f"{draft_lines[0] if draft_lines else 'What if this business model runs right under your nose?'}\n\n"
             "## Story\n"
             f"{draft}\n\n"
             "## Closing\n"
