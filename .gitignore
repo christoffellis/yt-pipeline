@@ -1,0 +1,7 @@
+__pycache__/
+*.pyc
+.venv/
+.env
+
+youtube-ai-factory/projects/*
+!youtube-ai-factory/projects/.gitkeep
