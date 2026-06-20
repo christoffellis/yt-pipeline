@@ -80,7 +80,7 @@ class PipelineCLITests(unittest.TestCase):
             self.assertIn("Rendering video...", second.stdout)
             self.assertNotIn("Running research agent...", second.stdout)
 
-    def test_pipeline_supports_picsum_image_provider(self):
+    def test_pipeline_generates_image_with_picsum_provider(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             cmd = [
                 "python",

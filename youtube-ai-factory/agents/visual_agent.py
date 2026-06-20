@@ -29,6 +29,14 @@ WAVE_MULTIPLIER_MAX = 29
 PNG_SIGNATURE = b"\x89PNG\r\n\x1a\n"
 
 
+class EmptyResponseError(Exception):
+    pass
+
+
+class InvalidImageFormatError(Exception):
+    pass
+
+
 def _png_chunk(chunk_type: bytes, data: bytes) -> bytes:
     """Return one PNG chunk encoded as length + type + data + CRC32."""
     return struct.pack(">I", len(data)) + chunk_type + data + struct.pack(">I", zlib.crc32(chunk_type + data) & 0xFFFFFFFF)
@@ -113,12 +121,18 @@ class VisualAgent:
                 with urllib.request.urlopen(url, timeout=self.image_timeout_seconds) as response:
                     data = response.read()
                     if not data:
-                        raise ValueError("Picsum returned empty response")
+                        raise EmptyResponseError("Picsum returned empty response")
                     if not data.startswith(PNG_SIGNATURE):
-                        raise ValueError("Picsum returned non-PNG image data")
+                        raise InvalidImageFormatError("Picsum returned non-PNG image data")
                     filename.write_bytes(data)
                     return
-            except (urllib.error.URLError, urllib.error.HTTPError, OSError, ValueError) as exc:
+            except (
+                urllib.error.URLError,
+                urllib.error.HTTPError,
+                OSError,
+                EmptyResponseError,
+                InvalidImageFormatError,
+            ) as exc:
                 log(f"Picsum image fetch failed for scene {scene['scene']} ({type(exc).__name__}): {exc}")
                 _write_scene_png(filename, f"{scene['scene']}::{scene['prompt']}")
                 return
