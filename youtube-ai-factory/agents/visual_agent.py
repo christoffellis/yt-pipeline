@@ -107,9 +107,8 @@ class VisualAgent:
             seed = hashlib.sha256(scene["prompt"].encode("utf-8")).hexdigest()[:16]
             width, height = DEFAULT_SCENE_SIZE
             url = f"https://picsum.photos/seed/{seed}/{width}/{height}.jpg"
-            request = urllib.request.Request(url, method="GET")
             try:
-                with urllib.request.urlopen(request, timeout=self.image_timeout_seconds) as response:
+                with urllib.request.urlopen(url, timeout=self.image_timeout_seconds) as response:
                     data = response.read()
                     if not data:
                         raise ValueError("Picsum returned empty image data")

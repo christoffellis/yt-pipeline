@@ -1,4 +1,5 @@
 import json
+import os
 import subprocess
 import tempfile
 import unittest
@@ -78,6 +79,28 @@ class PipelineCLITests(unittest.TestCase):
             second = subprocess.run(base_cmd, check=True, capture_output=True, text=True, timeout=120)
             self.assertIn("Rendering video...", second.stdout)
             self.assertNotIn("Running research agent...", second.stdout)
+
+    def test_pipeline_supports_picsum_image_provider(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            cmd = [
+                "python",
+                str(self.app_dir / "pipeline.py"),
+                "--idea",
+                "Ports Make Global Trade Work",
+                "--base-dir",
+                temp_dir,
+            ]
+            env = dict(os.environ)
+            env["IMAGE_PROVIDER"] = "picsum"
+            env["IMAGE_API_TIMEOUT_SECONDS"] = "2"
+            subprocess.run(cmd, check=True, capture_output=True, text=True, timeout=120, env=env)
+
+            project_dir = Path(temp_dir) / "projects" / "ports_make_global_trade_work"
+            self.assertTrue((project_dir / "visual_plan.json").exists())
+            self.assertGreater(
+                (project_dir / "visuals" / "001.png").stat().st_size,
+                MIN_EXPECTED_VISUAL_FILE_SIZE_BYTES,
+            )
 
 
 if __name__ == "__main__":
