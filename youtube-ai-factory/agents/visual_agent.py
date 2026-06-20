@@ -26,6 +26,7 @@ Y_MULTIPLIER_MIN = 5
 Y_MULTIPLIER_MAX = 19
 WAVE_MULTIPLIER_MIN = 11
 WAVE_MULTIPLIER_MAX = 29
+PNG_SIGNATURE = b"\x89PNG\r\n\x1a\n"
 
 
 def _png_chunk(chunk_type: bytes, data: bytes) -> bytes:
@@ -106,15 +107,15 @@ class VisualAgent:
         if self.image_provider == "picsum":
             seed = hashlib.sha256(scene["prompt"].encode("utf-8")).hexdigest()[:16]
             width, height = DEFAULT_SCENE_SIZE
-            url = f"https://picsum.photos/seed/{seed}/{width}/{height}.jpg"
+            url = f"https://picsum.photos/seed/{seed}/{width}/{height}.png"
             try:
                 with urllib.request.urlopen(url, timeout=self.image_timeout_seconds) as response:
                     data = response.read()
-                    if not data:
-                        raise ValueError("Picsum returned empty image data")
+                    if not data or not data.startswith(PNG_SIGNATURE):
+                        raise ValueError("Picsum returned non-PNG image data")
                     filename.write_bytes(data)
                     return
-            except (urllib.error.URLError, urllib.error.HTTPError, TimeoutError, OSError, ValueError) as exc:
+            except (urllib.error.URLError, urllib.error.HTTPError, OSError, ValueError) as exc:
                 log(f"Picsum image fetch failed for scene {scene['scene']} ({type(exc).__name__}): {exc}")
                 _write_scene_png(filename, f"{scene['scene']}::{scene['prompt']}")
                 return
