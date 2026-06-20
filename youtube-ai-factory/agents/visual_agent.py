@@ -9,6 +9,8 @@ from utils.common import write_json
 
 MAX_STORY_SCENES = 8
 DEFAULT_SCENE_SIZE = (640, 360)
+MAX_BEAT_LENGTH = 220
+MAX_DESCRIPTION_LENGTH = 120
 SCENE_STYLES = ("cinematic", "editorial", "documentary", "isometric", "infographic")
 SHOT_TYPES = ("wide shot", "medium shot", "close-up", "aerial perspective")
 CAMERA_MOTION = ("slow zoom in", "dolly forward", "pan left to right", "locked framing")
@@ -63,14 +65,15 @@ def _write_scene_png(path: Path, seed_text: str, size: tuple[int, int] = DEFAULT
 
 class VisualAgent:
     def __init__(self) -> None:
-        self.image_provider = os.getenv("IMAGE_PROVIDER", "procedural").strip().lower() or "procedural"
+        provider = os.getenv("IMAGE_PROVIDER", "procedural").strip().lower()
+        self.image_provider = provider if provider else "procedural"
 
     def _build_scene(self, scene_number: int, text: str) -> dict:
         """Build scene metadata and generation prompts for a single script beat."""
         style = SCENE_STYLES[(scene_number - 1) % len(SCENE_STYLES)]
         shot = SHOT_TYPES[(scene_number - 1) % len(SHOT_TYPES)]
         motion = CAMERA_MOTION[(scene_number - 1) % len(CAMERA_MOTION)]
-        beat = text[:220]
+        beat = text[:MAX_BEAT_LENGTH]
         prompt = (
             f"{style} YouTube explainer frame, {shot}, {motion}, "
             f"clean composition, high detail, visualizing: {beat}"
@@ -78,7 +81,7 @@ class VisualAgent:
         return {
             "scene": scene_number,
             "type": "image",
-            "description": beat[:120],
+            "description": beat[:MAX_DESCRIPTION_LENGTH],
             "beat": beat,
             "style": style,
             "shot_type": shot,
