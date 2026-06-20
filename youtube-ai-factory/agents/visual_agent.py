@@ -2,6 +2,8 @@ import hashlib
 import os
 import random
 import struct
+import urllib.error
+import urllib.request
 import zlib
 from pathlib import Path
 
@@ -14,7 +16,7 @@ MAX_DESCRIPTION_LENGTH = 120
 SCENE_STYLES = ("cinematic", "editorial", "documentary", "isometric", "infographic")
 SHOT_TYPES = ("wide shot", "medium shot", "close-up", "aerial perspective")
 CAMERA_MOTION = ("slow zoom in", "dolly forward", "pan left to right", "locked framing")
-SUPPORTED_IMAGE_PROVIDERS = ("procedural",)
+SUPPORTED_IMAGE_PROVIDERS = ("procedural", "picsum")
 CHANNEL_BASE_MIN = 24
 CHANNEL_BASE_MAX = 128
 X_MULTIPLIER_MIN = 3
@@ -68,6 +70,7 @@ class VisualAgent:
     def __init__(self) -> None:
         provider = os.getenv("IMAGE_PROVIDER", "procedural").strip().lower()
         self.image_provider = provider or "procedural"
+        self.image_timeout_seconds = int(os.getenv("IMAGE_API_TIMEOUT_SECONDS", "20"))
 
     def _build_scene(self, scene_number: int, text: str) -> dict:
         """Build scene metadata and generation prompts for a single script beat."""
@@ -96,9 +99,24 @@ class VisualAgent:
     def _generate_image(self, scene: dict, visuals_dir: Path) -> None:
         """Dispatch image generation to the configured provider for this scene."""
         filename = visuals_dir / scene["image_file"]
-        if self.image_provider == SUPPORTED_IMAGE_PROVIDERS[0]:
+        if self.image_provider == "procedural":
             _write_scene_png(filename, f"{scene['scene']}::{scene['prompt']}")
             return
+        if self.image_provider == "picsum":
+            seed = hashlib.sha256(scene["prompt"].encode("utf-8")).hexdigest()[:16]
+            width, height = DEFAULT_SCENE_SIZE
+            url = f"https://picsum.photos/seed/{seed}/{width}/{height}.jpg"
+            request = urllib.request.Request(url, method="GET")
+            try:
+                with urllib.request.urlopen(request, timeout=self.image_timeout_seconds) as response:
+                    data = response.read()
+                    if not data:
+                        raise ValueError("Picsum returned empty image data")
+                    filename.write_bytes(data)
+                    return
+            except (urllib.error.URLError, urllib.error.HTTPError, TimeoutError, OSError, ValueError):
+                _write_scene_png(filename, f"{scene['scene']}::{scene['prompt']}")
+                return
         raise ValueError(
             f"Unsupported IMAGE_PROVIDER='{self.image_provider}'. Supported: {', '.join(SUPPORTED_IMAGE_PROVIDERS)}"
         )

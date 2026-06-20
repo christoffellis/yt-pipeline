@@ -61,9 +61,13 @@ Set `OLLAMA_MODEL` in `.env` if you use a different model.
 ## 4) Setup image generation
 
 - Set `IMAGE_PROVIDER=procedural` (default) for deterministic local scene generation.
+- Set `IMAGE_PROVIDER=picsum` to pull scene images from the free Picsum API.
+- Optional: tune `IMAGE_API_TIMEOUT_SECONDS` (default `20`).
 - Put your image model path in `IMAGE_MODEL_PATH`.
 - `agents/visual_agent.py` now creates a structured per-scene visual plan (style/shot/motion/prompt)
   and renders deterministic scene PNGs locally.
+- `picsum` mode is network-backed; if an API request fails, generation automatically falls back to
+  deterministic procedural output so the pipeline remains resumable.
 - To integrate Stable Diffusion / FLUX, extend the provider branch in `VisualAgent._generate_image`.
 
 ## 5) Setup Google Sheets API
