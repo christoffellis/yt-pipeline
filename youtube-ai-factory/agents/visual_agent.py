@@ -12,23 +12,33 @@ DEFAULT_SCENE_SIZE = (640, 360)
 SCENE_STYLES = ("cinematic", "editorial", "documentary", "isometric", "infographic")
 SHOT_TYPES = ("wide shot", "medium shot", "close-up", "aerial perspective")
 CAMERA_MOTION = ("slow zoom in", "dolly forward", "pan left to right", "locked framing")
+CHANNEL_BASE_MIN = 24
+CHANNEL_BASE_MAX = 128
+X_MULTIPLIER_MIN = 3
+X_MULTIPLIER_MAX = 17
+Y_MULTIPLIER_MIN = 5
+Y_MULTIPLIER_MAX = 19
+WAVE_MULTIPLIER_MIN = 11
+WAVE_MULTIPLIER_MAX = 29
 
 
 def _png_chunk(chunk_type: bytes, data: bytes) -> bytes:
+    """Return one PNG chunk encoded as length + type + data + CRC32."""
     return struct.pack(">I", len(data)) + chunk_type + data + struct.pack(">I", zlib.crc32(chunk_type + data) & 0xFFFFFFFF)
 
 
 def _write_scene_png(path: Path, seed_text: str, size: tuple[int, int] = DEFAULT_SCENE_SIZE) -> None:
+    """Render a deterministic abstract RGB PNG for a scene from prompt-derived seed text."""
     width, height = size
     seed = int(hashlib.sha256(seed_text.encode("utf-8")).hexdigest()[:16], 16)
     rng = random.Random(seed)
 
-    red_base = rng.randint(24, 128)
-    green_base = rng.randint(24, 128)
-    blue_base = rng.randint(24, 128)
-    x_mul = rng.randint(3, 17)
-    y_mul = rng.randint(5, 19)
-    wave_mul = rng.randint(11, 29)
+    red_base = rng.randint(CHANNEL_BASE_MIN, CHANNEL_BASE_MAX)
+    green_base = rng.randint(CHANNEL_BASE_MIN, CHANNEL_BASE_MAX)
+    blue_base = rng.randint(CHANNEL_BASE_MIN, CHANNEL_BASE_MAX)
+    x_mul = rng.randint(X_MULTIPLIER_MIN, X_MULTIPLIER_MAX)
+    y_mul = rng.randint(Y_MULTIPLIER_MIN, Y_MULTIPLIER_MAX)
+    wave_mul = rng.randint(WAVE_MULTIPLIER_MIN, WAVE_MULTIPLIER_MAX)
 
     scanlines = bytearray()
     for y in range(height):
@@ -56,6 +66,7 @@ class VisualAgent:
         self.image_provider = os.getenv("IMAGE_PROVIDER", "procedural").strip().lower() or "procedural"
 
     def _build_scene(self, scene_number: int, text: str) -> dict:
+        """Build scene metadata and generation prompts for a single script beat."""
         style = SCENE_STYLES[(scene_number - 1) % len(SCENE_STYLES)]
         shot = SHOT_TYPES[(scene_number - 1) % len(SHOT_TYPES)]
         motion = CAMERA_MOTION[(scene_number - 1) % len(CAMERA_MOTION)]
@@ -79,6 +90,7 @@ class VisualAgent:
         }
 
     def _generate_image(self, scene: dict, visuals_dir: Path) -> None:
+        """Dispatch image generation to the configured provider for this scene."""
         filename = visuals_dir / scene["image_file"]
         if self.image_provider == "procedural":
             _write_scene_png(filename, f"{scene['scene']}::{scene['prompt']}")
