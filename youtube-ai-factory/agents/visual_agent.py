@@ -8,6 +8,7 @@ import zlib
 from pathlib import Path
 
 from utils.common import write_json
+from utils.logging_utils import log
 
 MAX_STORY_SCENES = 8
 DEFAULT_SCENE_SIZE = (640, 360)
@@ -114,7 +115,8 @@ class VisualAgent:
                         raise ValueError("Picsum returned empty image data")
                     filename.write_bytes(data)
                     return
-            except (urllib.error.URLError, urllib.error.HTTPError, TimeoutError, OSError, ValueError):
+            except (urllib.error.URLError, urllib.error.HTTPError, TimeoutError, OSError, ValueError) as exc:
+                log(f"Picsum image fetch failed for scene {scene['scene']} ({type(exc).__name__}): {exc}")
                 _write_scene_png(filename, f"{scene['scene']}::{scene['prompt']}")
                 return
         raise ValueError(

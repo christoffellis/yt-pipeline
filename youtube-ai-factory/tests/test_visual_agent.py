@@ -11,6 +11,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from agents.visual_agent import VisualAgent
 
+MIN_PROCEDURAL_IMAGE_SIZE_BYTES = 1024
+
 
 class VisualAgentProviderTests(unittest.TestCase):
     def test_picsum_provider_writes_api_image_bytes(self):
@@ -47,7 +49,7 @@ class VisualAgentProviderTests(unittest.TestCase):
             ):
                 VisualAgent()._generate_image(scene, visuals_dir)
 
-            self.assertGreater((visuals_dir / "002.png").stat().st_size, 1024)
+            self.assertGreater((visuals_dir / "002.png").stat().st_size, MIN_PROCEDURAL_IMAGE_SIZE_BYTES)
 
 
 if __name__ == "__main__":
