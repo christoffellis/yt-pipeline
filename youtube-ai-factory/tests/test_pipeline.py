@@ -47,6 +47,11 @@ class PipelineCLITests(unittest.TestCase):
             self.assertGreaterEqual(len(visual_plan), 1)
             self.assertIn("prompt", visual_plan[0])
             self.assertIn("image_file", visual_plan[0])
+            self.assertIn("beat", visual_plan[0])
+            self.assertIn("style", visual_plan[0])
+            self.assertIn("shot_type", visual_plan[0])
+            self.assertIn("camera_motion", visual_plan[0])
+            self.assertIn("negative_prompt", visual_plan[0])
 
             state = json.loads((project_dir / "state.json").read_text(encoding="utf-8"))
             for step in ("research", "script", "voice", "visuals", "render", "thumbnail"):

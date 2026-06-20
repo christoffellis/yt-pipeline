@@ -66,7 +66,7 @@ def _write_scene_png(path: Path, seed_text: str, size: tuple[int, int] = DEFAULT
 class VisualAgent:
     def __init__(self) -> None:
         provider = os.getenv("IMAGE_PROVIDER", "procedural").strip().lower()
-        self.image_provider = provider if provider else "procedural"
+        self.image_provider = provider or "procedural"
 
     def _build_scene(self, scene_number: int, text: str) -> dict:
         """Build scene metadata and generation prompts for a single script beat."""
