@@ -4,7 +4,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-MIN_VISUAL_FILE_SIZE_BYTES = 1024
+MIN_EXPECTED_VISUAL_FILE_SIZE_BYTES = 1024
 
 
 class PipelineCLITests(unittest.TestCase):
@@ -37,7 +37,7 @@ class PipelineCLITests(unittest.TestCase):
             self.assertGreater((project_dir / "audio.wav").stat().st_size, 0)
             self.assertGreater(
                 (project_dir / "visuals" / "001.png").stat().st_size,
-                MIN_VISUAL_FILE_SIZE_BYTES,
+                MIN_EXPECTED_VISUAL_FILE_SIZE_BYTES,
             )
 
             metadata = json.loads((project_dir / "metadata.json").read_text(encoding="utf-8"))

@@ -14,6 +14,7 @@ MAX_DESCRIPTION_LENGTH = 120
 SCENE_STYLES = ("cinematic", "editorial", "documentary", "isometric", "infographic")
 SHOT_TYPES = ("wide shot", "medium shot", "close-up", "aerial perspective")
 CAMERA_MOTION = ("slow zoom in", "dolly forward", "pan left to right", "locked framing")
+SUPPORTED_IMAGE_PROVIDERS = ("procedural",)
 CHANNEL_BASE_MIN = 24
 CHANNEL_BASE_MAX = 128
 X_MULTIPLIER_MIN = 3
@@ -95,11 +96,11 @@ class VisualAgent:
     def _generate_image(self, scene: dict, visuals_dir: Path) -> None:
         """Dispatch image generation to the configured provider for this scene."""
         filename = visuals_dir / scene["image_file"]
-        if self.image_provider == "procedural":
+        if self.image_provider == SUPPORTED_IMAGE_PROVIDERS[0]:
             _write_scene_png(filename, f"{scene['scene']}::{scene['prompt']}")
             return
         raise ValueError(
-            f"Unsupported IMAGE_PROVIDER='{self.image_provider}'. Supported: procedural"
+            f"Unsupported IMAGE_PROVIDER='{self.image_provider}'. Supported: {', '.join(SUPPORTED_IMAGE_PROVIDERS)}"
         )
 
     def generate(self, script: str, visual_plan_path: Path, visuals_dir: Path) -> list[dict]:
