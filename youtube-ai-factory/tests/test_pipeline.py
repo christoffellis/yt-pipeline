@@ -93,7 +93,8 @@ class PipelineCLITests(unittest.TestCase):
             env = dict(os.environ)
             env["IMAGE_PROVIDER"] = "picsum"
             env["IMAGE_API_TIMEOUT_SECONDS"] = "2"
-            subprocess.run(cmd, check=True, capture_output=True, text=True, timeout=120, env=env)
+            run = subprocess.run(cmd, check=True, capture_output=True, text=True, timeout=120, env=env)
+            self.assertIn("Fetching scene 1 image from Picsum", run.stdout)
 
             project_dir = Path(temp_dir) / "projects" / "ports_make_global_trade_work"
             self.assertTrue((project_dir / "visual_plan.json").exists())

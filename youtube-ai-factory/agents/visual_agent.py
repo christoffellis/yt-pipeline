@@ -108,10 +108,13 @@ class VisualAgent:
             seed = hashlib.sha256(scene["prompt"].encode("utf-8")).hexdigest()[:16]
             width, height = DEFAULT_SCENE_SIZE
             url = f"https://picsum.photos/seed/{seed}/{width}/{height}.png"
+            log(f"Fetching scene {scene['scene']} image from Picsum")
             try:
                 with urllib.request.urlopen(url, timeout=self.image_timeout_seconds) as response:
                     data = response.read()
-                    if not data or not data.startswith(PNG_SIGNATURE):
+                    if not data:
+                        raise ValueError("Picsum returned empty response")
+                    if not data.startswith(PNG_SIGNATURE):
                         raise ValueError("Picsum returned non-PNG image data")
                     filename.write_bytes(data)
                     return
