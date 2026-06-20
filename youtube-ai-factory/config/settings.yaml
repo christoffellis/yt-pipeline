@@ -1,0 +1,14 @@
+models:
+  llm_provider: ollama
+  ollama_model: qwen2.5:7b
+  voice_provider: xtts
+  voice_model_path: ./models/voice
+  image_provider: flux
+  image_model_path: ./models/images
+
+render:
+  fps: 30
+  transition: crossfade
+
+tracking:
+  google_sheet_name: "YouTube Content Pipeline"
