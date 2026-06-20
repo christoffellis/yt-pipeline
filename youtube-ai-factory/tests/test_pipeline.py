@@ -33,10 +33,15 @@ class PipelineCLITests(unittest.TestCase):
             self.assertTrue((project_dir / "metadata.json").exists())
             self.assertTrue((project_dir / "state.json").exists())
             self.assertGreater((project_dir / "audio.wav").stat().st_size, 0)
+            self.assertGreater((project_dir / "visuals" / "001.png").stat().st_size, 1024)
 
             metadata = json.loads((project_dir / "metadata.json").read_text(encoding="utf-8"))
             self.assertIn("title_options", metadata)
             self.assertIn("description", metadata)
+            visual_plan = json.loads((project_dir / "visual_plan.json").read_text(encoding="utf-8"))
+            self.assertGreaterEqual(len(visual_plan), 1)
+            self.assertIn("prompt", visual_plan[0])
+            self.assertIn("image_file", visual_plan[0])
 
             state = json.loads((project_dir / "state.json").read_text(encoding="utf-8"))
             for step in ("research", "script", "voice", "visuals", "render", "thumbnail"):

@@ -60,9 +60,11 @@ Set `OLLAMA_MODEL` in `.env` if you use a different model.
 
 ## 4) Setup image generation
 
+- Set `IMAGE_PROVIDER=procedural` (default) for deterministic local scene generation.
 - Put your image model path in `IMAGE_MODEL_PATH`.
-- `agents/visual_agent.py` currently generates deterministic placeholder images and a visual plan.
-- Replace the image generation function with your Stable Diffusion / FLUX inference call as needed.
+- `agents/visual_agent.py` now creates a structured per-scene visual plan (style/shot/motion/prompt)
+  and renders deterministic scene PNGs locally.
+- To integrate Stable Diffusion / FLUX, extend the provider branch in `VisualAgent._generate_image`.
 
 ## 5) Setup Google Sheets API
 
